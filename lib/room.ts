@@ -16,7 +16,7 @@ export type RoomView = {
   votes?: { counts: Record<string, number>; votedBy: string[] }
 }
 
-type RoomActions = { createRoom: (title: string, name: string) => void; joinRoom: (code: string, name: string) => void; addOption: (title: string) => void; removeOption: (id: string) => void; startOptions: () => void; startRating: () => void; copyCode: () => void }
+type RoomActions = { createRoom: (title: string, name: string) => void; joinRoom: (code: string, name: string) => void; addOption: (title: string) => void; removeOption: (id: string) => void; startOptions: () => void; startRating: () => void; setRating: (optionId: string, score: 1 | 2 | 3 | 4 | 5, reason: string) => void; revealRatings: () => void; openVoting: () => void; copyCode: () => void }
 
 const emptyView = (): RoomView => ({ phase: 'lobby', room: { code: '', title: '', hostId: '' }, me: { id: '', name: '' }, participants: [], options: [], myRatings: {}, ratingProgress: { finished: 0, total: 0 } })
 const makeCode = () => Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -29,5 +29,8 @@ export const useRoom = create<RoomView & RoomActions>((set, get) => ({
   removeOption: (id) => set({ options: get().options.filter((option) => option.id !== id) }),
   startOptions: () => set({ phase: 'options' }),
   startRating: () => set({ phase: 'rating' }),
+  setRating: (optionId, score, reason) => { const ratings = { ...get().myRatings, [optionId]: { score, reason: reason.trim() || undefined } }; set({ myRatings: ratings, ratingProgress: { ...get().ratingProgress, finished: Object.keys(ratings).length } }) },
+  revealRatings: () => set({ phase: 'revealed', revealed: { ratings: {}, means: {}, spreads: {} }, analysis: { verdicts: {}, disagreements: [], compromise: undefined } }),
+  openVoting: () => set({ phase: 'voting' }),
   copyCode: () => { const code = get().room.code; if (code) navigator.clipboard?.writeText(code) },
 }))
